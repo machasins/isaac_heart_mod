@@ -1,8 +1,8 @@
-local mod = RegisterMod("Heart Resourcing", 1)
+NoHeartWaste = RegisterMod("Heart Resourcing", 1)
 
 -- Hearts to ignore
 ---@type table<HeartSubType, boolean>
-mod.IGNORE_LIST = {
+NoHeartWaste.IGNORE_LIST = {
     [HeartSubType.HEART_BONE] = true,
     [HeartSubType.HEART_GOLDEN] = true,
     [HeartSubType.HEART_ROTTEN] = true,
@@ -11,13 +11,13 @@ mod.IGNORE_LIST = {
 
 -- Red and soul heart values
 ---@type table<HeartSubType, integer>
-mod.BOTH_VALUES = {
+NoHeartWaste.BOTH_VALUES = {
     [HeartSubType.HEART_BLENDED] = 2,
 }
 
 -- Red heart values
 ---@type table<HeartSubType, integer>
-mod.HEART_VALUES = {
+NoHeartWaste.HEART_VALUES = {
     [HeartSubType.HEART_DOUBLEPACK] = 4,
     [HeartSubType.HEART_FULL] = 2,
     [HeartSubType.HEART_HALF] = 1,
@@ -26,7 +26,7 @@ mod.HEART_VALUES = {
 
 -- Soul heart values
 ---@type table<HeartSubType, integer>
-mod.SOUL_VALUES = {
+NoHeartWaste.SOUL_VALUES = {
     [HeartSubType.HEART_BLACK] = 2,
     [HeartSubType.HEART_SOUL] = 2,
     [HeartSubType.HEART_HALF_SOUL] = 1,
@@ -76,7 +76,7 @@ end
 ---Checks whether a heart is interacted with and adds it to a list
 ---@param pickup EntityPickup
 ---@param other Entity
-function mod:OnPickupCollision(pickup, other)
+function NoHeartWaste:OnPickupCollision(pickup, other)
     -- The player, if it is the other collider
     local player = other:ToPlayer()
     -- Check that the main entity is a heart and that the other entity is a player
@@ -86,7 +86,7 @@ function mod:OnPickupCollision(pickup, other)
     end
 end
 
-mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, mod.OnPickupCollision)
+NoHeartWaste:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, NoHeartWaste.OnPickupCollision)
 
 ---Spawn an amount of hearts
 ---@param amount integer
@@ -114,7 +114,7 @@ local function SpawnHearts(amount, half, full, player)
 end
 
 ---Check whether the player has consumed any hearts
-function mod:OnUpdate()
+function NoHeartWaste:OnUpdate()
     -- Loop through the pickup list
     for pickup, playerData in pairs(pickupList) do
         -- Check if the pickup is dead
@@ -124,14 +124,14 @@ function mod:OnUpdate()
             -- The player interacting with the heart
             local player = playerData.player.Ref:ToPlayer()
             -- Check if the heart should be processed and that the player is not a Lost variant (Can't get health)
-            if not mod.IGNORE_LIST[type] and player and player:GetHealthType() ~= HealthType.LOST then
-                if mod.BOTH_VALUES[type] then
+            if not NoHeartWaste.IGNORE_LIST[type] and player and player:GetHealthType() ~= HealthType.LOST then
+                if NoHeartWaste.BOTH_VALUES[type] then
                     -- The excess amount of red hearts
-                    local excessRed = (playerData.heartAmnt + mod.BOTH_VALUES[type]) - GetRedHearts(player)
+                    local excessRed = (playerData.heartAmnt + NoHeartWaste.BOTH_VALUES[type]) - GetRedHearts(player)
                     -- The excess amount of soul hearts
-                    local excessSoul = (playerData.soulAmnt + mod.BOTH_VALUES[type]) - GetSoulHearts(player)
+                    local excessSoul = (playerData.soulAmnt + NoHeartWaste.BOTH_VALUES[type]) - GetSoulHearts(player)
                     -- Whether to spawn any hearts
-                    local doSpawn = (excessRed + excessSoul) ~= mod.BOTH_VALUES[type]
+                    local doSpawn = (excessRed + excessSoul) ~= NoHeartWaste.BOTH_VALUES[type]
                     -- Spawn red hearts
                     if doSpawn and excessRed < excessSoul then
                         SpawnHearts(excessRed, HeartSubType.HEART_HALF, HeartSubType.HEART_FULL, player)
@@ -140,15 +140,15 @@ function mod:OnUpdate()
                         SpawnHearts(excessSoul, HeartSubType.HEART_HALF_SOUL, HeartSubType.HEART_SOUL, player)
                     end
                 -- Check if the heart is a type of soul heart
-                elseif mod.SOUL_VALUES[type] then
+                elseif NoHeartWaste.SOUL_VALUES[type] then
                     -- The amount of hearts to spawn
-                    local excessAmnt = (playerData.soulAmnt + mod.SOUL_VALUES[type]) - GetSoulHearts(player)
+                    local excessAmnt = (playerData.soulAmnt + NoHeartWaste.SOUL_VALUES[type]) - GetSoulHearts(player)
                     -- Spawn the extra hearts
                     SpawnHearts(excessAmnt, HeartSubType.HEART_HALF_SOUL, HeartSubType.HEART_SOUL, player)
                 -- Check if the heart is a type of red heart
-                elseif mod.HEART_VALUES[type] then
+                elseif NoHeartWaste.HEART_VALUES[type] then
                     -- The amount of hearts to spawn
-                    local excessAmnt = (playerData.heartAmnt + mod.HEART_VALUES[type]) - GetRedHearts(player)
+                    local excessAmnt = (playerData.heartAmnt + NoHeartWaste.HEART_VALUES[type]) - GetRedHearts(player)
                     -- Spawn the extra hearts
                     SpawnHearts(excessAmnt, HeartSubType.HEART_HALF, HeartSubType.HEART_FULL, player)
                 end
@@ -160,4 +160,4 @@ function mod:OnUpdate()
     pickupList = {}
 end
 
-mod:AddCallback(ModCallbacks.MC_POST_UPDATE, mod.OnUpdate)
+NoHeartWaste:AddCallback(ModCallbacks.MC_POST_UPDATE, NoHeartWaste.OnUpdate)
