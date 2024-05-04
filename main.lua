@@ -34,20 +34,55 @@ mod.SOUL_VALUES = {
 
 -- The pickups being processed this frame
 -- [key: The pickup entity; value: the player and the amount of red and soul hearts they have before collision]
----@type table<EntityPtr, { player: EntityPtr, heartAmnt: integer, soulAmnt: integer }>
+---@type table<EntityPtr, { player: EntityPtr, otherPlayer: EntityPtr, heartAmnt: integer, soulAmnt: integer }>
 local pickupList = {}
+
+---Get the red hearts of the player
+---@param player EntityPlayer
+---@return integer
+local function GetRedHearts(player)
+    -- The player's character type
+    local type = player:GetPlayerType()
+    -- Check if T. Bethany
+    if type == PlayerType.PLAYER_BETHANY_B then
+        -- Get Blood Charges
+        return player:GetBloodCharge()
+    else
+        -- Return red hearts
+        return player:GetHearts()
+    end
+end
+
+---Get the soul hearts of the player
+---@param player EntityPlayer
+---@return integer
+local function GetSoulHearts(player)
+    -- The player's character type
+    local type = player:GetPlayerType()
+    -- Check if the Forgotten
+    if type == PlayerType.PLAYER_THEFORGOTTEN then
+        -- Get the Soul's soul hearts
+        return player:GetSubPlayer():GetSoulHearts()
+    -- Check if Bethany
+    elseif type == PlayerType.PLAYER_BETHANY then
+        -- Get Soul Charges
+        return player:GetSoulCharge()
+    else
+        -- Return soul hearts
+        return player:GetSoulHearts()
+    end
+end
 
 ---Checks whether a heart is interacted with and adds it to a list
 ---@param pickup EntityPickup
 ---@param other Entity
----@param low boolean
-function mod:OnPickupCollision(pickup, other, low)
+function mod:OnPickupCollision(pickup, other)
     -- The player, if it is the other collider
     local player = other:ToPlayer()
     -- Check that the main entity is a heart and that the other entity is a player
     if player and pickup.Variant == PickupVariant.PICKUP_HEART then
         -- Add the pickup to the list, along with the player and their health values
-        pickupList[EntityPtr(pickup)] = { player = EntityPtr(player), heartAmnt = player:GetHearts(), soulAmnt = player:GetSoulHearts() }
+        pickupList[EntityPtr(pickup)] = { player = EntityPtr(player), heartAmnt = GetRedHearts(player), soulAmnt = GetSoulHearts(player) }
     end
 end
 
@@ -90,13 +125,11 @@ function mod:OnUpdate()
             local player = playerData.player.Ref:ToPlayer()
             -- Check if the heart should be processed and that the player is not a Lost variant (Can't get health)
             if not mod.IGNORE_LIST[type] and player and player:GetHealthType() ~= HealthType.LOST then
-                local playerType = player:GetPlayerType()
-                -- Check if the heart is a blended heart
-                if mod.BOTH_VALUES[type] and playerType ~= PlayerType.PLAYER_BETHANY and playerType ~= PlayerType.PLAYER_BETHANY_B then
+                if mod.BOTH_VALUES[type] then
                     -- The excess amount of red hearts
-                    local excessRed = (playerData.heartAmnt + mod.BOTH_VALUES[type]) - player:GetHearts()
+                    local excessRed = (playerData.heartAmnt + mod.BOTH_VALUES[type]) - GetRedHearts(player)
                     -- The excess amount of soul hearts
-                    local excessSoul = (playerData.soulAmnt + mod.BOTH_VALUES[type]) - player:GetSoulHearts()
+                    local excessSoul = (playerData.soulAmnt + mod.BOTH_VALUES[type]) - GetSoulHearts(player)
                     -- Whether to spawn any hearts
                     local doSpawn = (excessRed + excessSoul) ~= mod.BOTH_VALUES[type]
                     -- Spawn red hearts
@@ -106,16 +139,16 @@ function mod:OnUpdate()
                     elseif doSpawn and excessSoul < excessRed then
                         SpawnHearts(excessSoul, HeartSubType.HEART_HALF_SOUL, HeartSubType.HEART_SOUL, player)
                     end
-                -- Check if the heart is a type of soul heart and the player is not Bethany
-                elseif mod.SOUL_VALUES[type] and playerType ~= PlayerType.PLAYER_BETHANY then
+                -- Check if the heart is a type of soul heart
+                elseif mod.SOUL_VALUES[type] then
                     -- The amount of hearts to spawn
-                    local excessAmnt = (playerData.soulAmnt + mod.SOUL_VALUES[type]) - player:GetSoulHearts()
+                    local excessAmnt = (playerData.soulAmnt + mod.SOUL_VALUES[type]) - GetSoulHearts(player)
                     -- Spawn the extra hearts
                     SpawnHearts(excessAmnt, HeartSubType.HEART_HALF_SOUL, HeartSubType.HEART_SOUL, player)
-                -- Check if the heart is a type of red heart and the player is not T. Bethany
-                elseif mod.HEART_VALUES[type] and playerType ~= PlayerType.PLAYER_BETHANY_B then
+                -- Check if the heart is a type of red heart
+                elseif mod.HEART_VALUES[type] then
                     -- The amount of hearts to spawn
-                    local excessAmnt = (playerData.heartAmnt + mod.HEART_VALUES[type]) - player:GetHearts()
+                    local excessAmnt = (playerData.heartAmnt + mod.HEART_VALUES[type]) - GetRedHearts(player)
                     -- Spawn the extra hearts
                     SpawnHearts(excessAmnt, HeartSubType.HEART_HALF, HeartSubType.HEART_FULL, player)
                 end
