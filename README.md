@@ -1,4 +1,4 @@
-![](img=https://i.imgur.com/vwTuc8J.png)
+![](https://i.imgur.com/vwTuc8J.png)
 
 Tired of wasting hearts when you pick up more than you needed? Well, this mod aims to solve that problem by spawning whatever you don't use from a heart pickup. 
 
