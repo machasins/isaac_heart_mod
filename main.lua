@@ -37,19 +37,33 @@ NoHeartWaste.SOUL_VALUES = {
 ---@type table<EntityPtr, { player: EntityPtr, otherPlayer: EntityPtr, heartAmnt: integer, soulAmnt: integer }>
 local pickupList = {}
 
+---Gets the amount of charge the player has for a specific collectible
+---@param player EntityPlayer
+---@param id CollectibleType
+---@return integer
+local function GetActiveItemCharge(player, id)
+    local addition = 0
+    for i = ActiveSlot.SLOT_PRIMARY, ActiveSlot.SLOT_POCKET2 do
+        addition = addition + (player:GetActiveItem(i) == id and player:GetActiveCharge(i) or 0)
+    end
+    return addition
+end
+
 ---Get the red hearts of the player
 ---@param player EntityPlayer
 ---@return integer
 local function GetRedHearts(player)
     -- The player's character type
     local type = player:GetPlayerType()
+    -- Additional hearts the player could have
+    local addition = player:HasCollectible(CollectibleType.COLLECTIBLE_THE_JAR) and player:GetJarHearts() or 0
     -- Check if T. Bethany
     if type == PlayerType.PLAYER_BETHANY_B then
         -- Get Blood Charges
-        return player:GetBloodCharge()
+        return player:GetBloodCharge() + addition
     else
         -- Return red hearts
-        return player:GetHearts()
+        return player:GetHearts() + addition
     end
 end
 
@@ -59,17 +73,19 @@ end
 local function GetSoulHearts(player)
     -- The player's character type
     local type = player:GetPlayerType()
+    -- Additional hearts the player could have
+    local addition = GetActiveItemCharge(player, CollectibleType.COLLECTIBLE_ALABASTER_BOX)
     -- Check if the Forgotten
     if type == PlayerType.PLAYER_THEFORGOTTEN then
         -- Get the Soul's soul hearts
-        return player:GetSubPlayer():GetSoulHearts()
+        return player:GetSubPlayer():GetSoulHearts() + addition
     -- Check if Bethany
     elseif type == PlayerType.PLAYER_BETHANY then
         -- Get Soul Charges
-        return player:GetSoulCharge()
+        return player:GetSoulCharge() + addition
     else
         -- Return soul hearts
-        return player:GetSoulHearts()
+        return player:GetSoulHearts() + addition
     end
 end
 
