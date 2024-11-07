@@ -57,8 +57,12 @@ local function GetRedHearts(player)
     local type = player:GetPlayerType()
     -- Additional hearts the player could have
     local addition = player:HasCollectible(CollectibleType.COLLECTIBLE_THE_JAR) and player:GetJarHearts() or 0
+    -- Check if the Soul
+    if type == PlayerType.PLAYER_THESOUL then
+        -- Get the Forgotten's red hearts
+        return player:GetSubPlayer():GetHearts() + addition
     -- Check if T. Bethany
-    if type == PlayerType.PLAYER_BETHANY_B then
+    elseif type == PlayerType.PLAYER_BETHANY_B then
         -- Get Blood Charges
         return player:GetBloodCharge() + addition
     else
@@ -134,16 +138,22 @@ function NoHeartWaste:OnUpdate()
     -- Loop through the pickup list
     for pickup, playerData in pairs(pickupList) do
         -- Check if the pickup is dead
-        if pickup.Ref:IsDead() then
+        if pickup and pickup.Ref and pickup.Ref:IsDead() then
             -- The type of heart the pickup is
             local type = pickup.Ref.SubType
             -- The player interacting with the heart
             local player = playerData.player.Ref:ToPlayer()
             -- Check if the heart should be processed and that the player is not a Lost variant (Can't get health)
             if not NoHeartWaste.IGNORE_LIST[type] and player and player:GetHealthType() ~= HealthType.LOST then
+                -- Handle different heart values with Maggy's Bow
+                local hasMaggysBow = player:HasCollectible(CollectibleType.COLLECTIBLE_MAGGYS_BOW)
                 if NoHeartWaste.BOTH_VALUES[type] then
+                    -- Calculate true red heart values
+                    local redValue = hasMaggysBow and NoHeartWaste.BOTH_VALUES[type] * 2 or NoHeartWaste.BOTH_VALUES[type]
                     -- The excess amount of red hearts
-                    local excessRed = (playerData.heartAmnt + NoHeartWaste.BOTH_VALUES[type]) - GetRedHearts(player)
+                    local excessRed = (playerData.heartAmnt + redValue) - GetRedHearts(player)
+                    -- Calculate true excess red hearts
+                    excessRed = hasMaggysBow and math.floor(excessRed / 2) or excessRed
                     -- The excess amount of soul hearts
                     local excessSoul = (playerData.soulAmnt + NoHeartWaste.BOTH_VALUES[type]) - GetSoulHearts(player)
                     -- Whether to spawn any hearts
@@ -163,10 +173,15 @@ function NoHeartWaste:OnUpdate()
                     SpawnHearts(excessAmnt, HeartSubType.HEART_HALF_SOUL, HeartSubType.HEART_SOUL, player)
                 -- Check if the heart is a type of red heart
                 elseif NoHeartWaste.HEART_VALUES[type] then
-                    -- The amount of hearts to spawn
-                    local excessAmnt = (playerData.heartAmnt + NoHeartWaste.HEART_VALUES[type]) - GetRedHearts(player)
-                    -- Spawn the extra hearts
-                    SpawnHearts(excessAmnt, HeartSubType.HEART_HALF, HeartSubType.HEART_FULL, player)
+                    -- Apple of Sodom check
+                    if not (playerData.heartAmnt == GetRedHearts(player) and player:GetTrinketMultiplier(TrinketType.TRINKET_APPLE_OF_SODOM) > 0) then
+                        -- Calculate true red heart value
+                        local heartValue = hasMaggysBow and NoHeartWaste.HEART_VALUES[type] * 2 or NoHeartWaste.HEART_VALUES[type]
+                        -- The amount of hearts to spawn
+                        local excessAmnt = (playerData.heartAmnt + heartValue) - GetRedHearts(player)
+                        -- Spawn the extra hearts
+                        SpawnHearts(hasMaggysBow and math.floor(excessAmnt / 2) or excessAmnt, HeartSubType.HEART_HALF, HeartSubType.HEART_FULL, player)
+                    end
                 end
             end
         end
