@@ -119,14 +119,16 @@ local function SpawnHearts(amount, half, full, player)
         -- If the amount can support a full heart
         if amount >= 2 then
             -- Spawn a full heart at a random postion
-            Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, full,
+            local e = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, full,
                 Game():GetRoom():FindFreePickupSpawnPosition(player.Position, 0, true), Vector.Zero, player)
+            e:ToPickup():Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, full, false, false, true)
             -- Reduce the amount to spawn by 2
             amount = amount - 2
         else
             -- Spawn a half heart at a random position
-            Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, half,
+            local e = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, half,
                 Game():GetRoom():FindFreePickupSpawnPosition(player.Position, 0, true), Vector.Zero, player)
+            e:ToPickup():Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, half, false, false, true)
             -- Reduce the amount to spawn by 1
             amount = amount - 1
         end
@@ -144,7 +146,7 @@ function NoHeartWaste:OnUpdate()
             -- The player interacting with the heart
             local player = playerData.player.Ref:ToPlayer()
             -- Check if the heart should be processed and that the player is not a Lost variant (Can't get health)
-            if not NoHeartWaste.IGNORE_LIST[type] and player and player:GetHealthType() ~= HealthType.LOST then
+            if not NoHeartWaste.IGNORE_LIST[type] and player and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
                 -- Handle different heart values with Maggy's Bow
                 local hasMaggysBow = player:HasCollectible(CollectibleType.COLLECTIBLE_MAGGYS_BOW)
                 if NoHeartWaste.BOTH_VALUES[type] then
