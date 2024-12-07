@@ -87,6 +87,9 @@ local function GetSoulHearts(player)
     elseif type == PlayerType.PLAYER_BETHANY then
         -- Get Soul Charges
         return player:GetSoulCharge() + addition
+    elseif type == PlayerType.PLAYER_THESOUL_B then
+        -- Get the Forgotten's soul hearts
+        return player:GetOtherTwin():GetSoulHearts() + addition
     else
         -- Return soul hearts
         return player:GetSoulHearts() + addition
