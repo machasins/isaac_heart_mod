@@ -127,10 +127,11 @@ local function SpawnHearts(amount, half, full, player)
             e:ToPickup():Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, full, false, false, true)
             -- Reduce the amount to spawn by 2
             amount = amount - 2
-        else
+        -- Only spawn half red hearts when the player does not have Mom's Locket
+        elseif player:GetTrinketMultiplier(TrinketType.TRINKET_MOMS_LOCKET) <= 0 then
             -- Spawn a half heart at a random position
             local e = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, half,
-                Game():GetRoom():FindFreePickupSpawnPosition(player.Position, 0, true), Vector.Zero, player)
+            Game():GetRoom():FindFreePickupSpawnPosition(player.Position, 0, true), Vector.Zero, player)
             e:ToPickup():Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, half, false, false, true)
             -- Reduce the amount to spawn by 1
             amount = amount - 1
